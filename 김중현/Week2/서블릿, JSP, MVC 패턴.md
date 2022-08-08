@@ -476,14 +476,217 @@ JAVA 코드, 데이터를 조회하는 리포지토리 등등 다양한 코드�
   
 ### Model View Controller (MVC)
 > 하나의 서블릿이나 JSP로 처리하던 것을 컨트롤러(Controller)와 뷰(View)라는 영역으로 서로 역할을 나누어 처리하는 것
+<img width="630" alt="스크린샷 2022-08-08 오후 1 46 12" src="https://user-images.githubusercontent.com/80838501/183341330-84c5f1fe-187a-47d6-adbc-3fd134c7d2cb.png">
+
 ```
 Controller: HTTP 요청을 받아서 파라미터를 검증하고 비즈니스 로직을 실행한다. 그리고 뷰에 전달할 결과 데이터를 조회해서 모델에 담는다.
 View: 모델에 담겨있는 데이터를 사용해서 화면을 그리는 일에 집중한다. 여기서는 HTML을 생성하는 부분을 말한다.
 Model: 뷰에 출력할 데이터를 담아둔다. 뷰가 필요한 데이터를 모두 모델에 담아서 전달해주어 뷰는 비즈니스 로직이나 데이터 접근을 몰라도 되고, 화면을 렌더링 하는 일에 집중할 수 있다.
 ```
   
-  
 - 사용자가 Controller를 호출하면, Controller는 파라미터를 꺼내 확인해 스펙을 확인한다. 그 다음, 뒤에 있는 서비스나 리포지토리를 호출해 <br>
   데이터 저장, 상품 주문 등의 로직을 수행한다. 그리고 Controller가 다시 로직 수행 결과를 받아서 Model에 넘긴다. View 로직이 Model에서 값을 꺼내<br>
   출력한다.
+<br>
+<br>
+<br>
+<br>
+ 
+## MVC 패턴 - 적용
+> 서블릿을 컨트롤러로, JSP를 뷰로 사용해 MVC 패턴을 적용해보자!
+> 그리고 모델은 HttpServletRequest 객체를 사용한다.   
+> request는 내부에 데이터 저장소를 가지고 있으며 request.setAttribute(), request.getAttribute()를 사용하면 데이터를 보관, 조회할 수 있다.
   
+### 회원 등록
+#### Controller
+> MvcMemberFormServlet
+```java
+package hello.servlet.web.servletmvc;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet(name = "mvcMemberFormServlet", urlPatterns = "/servlet-mvc/members/new-form")
+public class MvcMemberFormServlet extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String viewPath = "/WEB-INF/views/new-form.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath); //Controller에서 View로 이동할 때 사용
+        dispatcher.forward(request, response); //Controller가 View 호출
+    }
+}
+```
+- `dispatcher.forward()`: 다른 서블릿이나 JSP로 이동. 서버 내부에서 다시 호출 발생.(클라이언트에게 가지 않고 서버 내부에서 메소드 하나 호출하듯이)
+- `/WEB_INF`: 이 위치에 JSP가 있으면 외부에서 JSP를 직접 호출할 수 없다. Controller를 통해 호출.
+<br>
+<br>
+<br>
+  
+#### View
+> new-form.jsp
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<body>
+<!-- 상대경로 사용, [현재 URL이 속한 계층 경로 + /save] -->
+<form action="save" method="post">
+    username: <input type="text" name="username" />
+    age: <input type="text" name="age" />
+    <button type="submit">전송</button>
+</form>
+</body>
+</html>
+```
+- JSP를 재활용하기 위해 절대경로가 아닌 상대경로로 작성
+<br>
+<br>
+<br>
+  
+### 회원 저장
+#### Controller
+> MvcMemberSaveServlet
+```java
+package hello.servlet.web.servletmvc;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet(name = "mvcMemberSaveServlet", urlPatterns = "/servlet-mvc/members/save")
+public class MvcMemberSaveServlet extends HttpServlet {
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+
+        Member member = new Member(username, age);
+        System.out.println("member = " + member);
+        memberRepository.save(member);
+
+        //Model에 데이터를 보관. request.setAttribute("member", member);
+        request.setAttribute("member", member); //request 내부 저장소에 member 저장
+
+        String viewPath = "/WEB-INF/views/save-result.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+```
+- 파라미터로 값 전달받고, 비즈니스 로직 실행하고, Model에 데이터 담고, View에게 넘긴다.
+<br>
+<br>
+<br>
+  
+#### View
+> save-result.jsp
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+성공
+<ul>
+    <li>id=${member.id}</li>
+    <li>username=${member.username}</li>
+    <li>age=${member.age}</li>
+</ul>
+<a href="/index.html">메인</a>
+</body>
+</html>
+```
+- `${}`로 request의 attribute에 담긴 데이터를 쉽게 조회할 수 있다.
+- 화면에 수정할 사항이 생기면 View만 수정하면 된다. 
+<br>
+<br>
+<br>
+  
+### 회원 목록 조회
+#### Controller
+> MvcMemberListServlet
+```java
+package hello.servlet.web.servletmvc;
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+
+@WebServlet(name = "mvcMemberListServlet", urlPatterns = "/servlet-mvc/members")
+public class MvcMemberListServlet extends HttpServlet {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("MvcMemberListServlet.service");
+        List<Member> members = memberRepository.findAll();
+
+        //Model에 담기
+        request.setAttribute("members", members); //key, value
+
+        String viewPath = "/WEB-INF/views/members.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+```
+<br>
+<br>
+<br>
+  
+#### View
+> members.jsp
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<a href="/index.html">메인</a>
+<table>
+    <thead>
+    <th>id</th>
+    <th>username</th>
+    <th>age</th>
+    </thead>
+    <tbody>
+    <c:forEach var="item" items="${members}">
+        <tr>
+            <td>${item.id}</td>
+            <td>${item.username}</td>
+            <td>${item.age}</td>
+        </tr>
+    </c:forEach>
+    </tbody>
+ </table>
+</body>
+</html> 
+```
