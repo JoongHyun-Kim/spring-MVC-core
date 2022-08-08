@@ -334,3 +334,124 @@ public class MemberListServlet extends HttpServlet {
 필요한 곳만 코드를 적용해 동적으로 변경할 수 있다.
 템플릿 엔진에는 JSP, Thymeleaf, Freemarker, Velocity등이 있다. JSP로 동일한 작업을 더욱 간단하게 해보자!
 ```
+<br>
+<br>
+<br>
+<br>
+
+## JSP로 회원 관리 웹 애플리케이션 만들기
+### Form 
+#### new-form.jsp
+```jsp
+ <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+   <html>
+   <head>
+       <title>Title</title>
+   </head>
+ <body>
+ <form action="/jsp/members/save.jsp" method="post">
+   username: <input type="text" name="username" />
+   age: <input type="text" name="age" />
+   <button type="submit">전송</button>
+ </form>
+ </body>
+ </html>
+```
+<br>
+<br>
+
+### Save
+#### save.jsp
+```jsp
+<%@ page import="hello.servlet.domain.member.MemberRepository" %>
+<%@ page import="hello.servlet.domain.member.Member" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+   //request, response는 그냥 사용 가능
+    MemberRepository memberRepository = MemberRepository.getInstance();
+    System.out.println("save.jsp");
+    String username = request.getParameter("username");
+    int age = Integer.parseInt(request.getParameter("age"));
+    
+    Member member = new Member(username, age);
+    System.out.println("member = " + member);
+    memberRepository.save(member);
+%>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+성공
+<ul>
+      <li>id=<%=member.getId()%></li>
+      <li>username=<%=member.getUsername()%></li>
+      <li>age=<%=member.getAge()%></li>
+</ul>
+<a href="/index.html">메인</a>
+</body>
+</html>
+```
+- `<% %>` 내부에는 자바 코드 작성
+- `<%= %>` 자바 코드 출력 가능
+- 순수 서블릿만 사용해 자바 코드로 html을 쓰는 것보다 훨씬 간편하다.
+<br>
+<br>
+
+
+### 회원 목록
+#### members.jsp
+```jsp
+<%@ page import="java.util.List" %>
+<%@ page import="hello.servlet.domain.member.MemberRepository" %>
+<%@ page import="hello.servlet.domain.member.Member" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    MemberRepository memberRepository = MemberRepository.getInstance();
+    List<Member> members = memberRepository.findAll();
+%>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<a href="/index.html">메인</a>
+<table>
+    <thead>
+    <th>id</th>
+    <th>username</th>
+    <th>age</th>
+    </thead>
+    <tbody>
+    <%
+      for (Member member : members) {
+          out.write("    <tr>");
+          out.write("         <td>" + member.getId() + "</td>");
+          out.write("         <td>" + member.getUsername() + "</td>");
+          out.write("         <td>" + member.getAge() + "</td>");
+          out.write("    </tr>");
+      }
+    %>
+    </tbody>
+</table>
+</body>
+</html>
+```
+- 회원 리포지토리를 먼저 조회한 다음 결과 목록을 사용해 <tr><td> HTML 태그 반복 출력
+- 마찬가지로 `<% %>`를 이용해 동적인 부분은 자바 코드
+<br>
+<br>
+  
+### 서블릿과 JSP의 한계
+```
+서블릿을 사용할 때는 뷰(View)화면을 위한 HTML 코드가 자바 코드에 섞여서 복잡했다.
+JSP를 사용하면서 뷰를 생성하는 HTML 작업을 깔끔하게 할 수 있고, 중간중간 동적으로 변경이 필요한 부분에만 자바 코드를 적용했다.
+하지만 이렇게 해도, save.jsp를 보면 코드의 절반은 회원을 저장하기 위한 비즈니스 로직이고, 나머지 절반만 결과를 HTML로 보여주기 위한 뷰 영역이다.
+JAVA 코드, 데이터를 조회하는 리포지토리 등등 다양한 코드가 모두 JSP에 노출되어 있다. 즉, JSP가 너무 많은 역할을 하고 있다.
+```
+  
+**→ MVC 패턴!**  
+**비즈니스 로직은 서블릿 처럼 다른곳에서 처리하고, JSP는 목적에 맞게 HTML로 화면(View)을 그리는 일에 집중하도록 하자.**
+  
