@@ -690,3 +690,41 @@ public class MvcMemberListServlet extends HttpServlet {
 </body>
 </html> 
 ```
+- Model에 담아둔 members를 taglib를 사용해 반복해 출력
+- members 목록에서 member를 순서대로 꺼내 item 변수에 담아 출력
+<br>
+<br>
+<br>
+<br>
+
+## MVC 패턴 - 한계
+### 현재 MVC Controller의 단점
+#### 1) 포워드 중복
+```java
+RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+dispatcher.forward(request, response);
+```
+- View로 넘어가는 코드가 항상 중복 호출된다.
+<br>
+  
+#### 2) ViewPath 중복
+```java
+String viewPath = "/WEB-INF/views/new-form.jsp";
+```
+- prefix: /WEB-INF/views/  
+  suffix: .jsp
+- 만약 JSP가 아닌 다른 뷰(ex. thymeleaf)로 변경하면 전체 코드를 다 변경해야 한다. 
+<br>
+  
+#### 3) 사용하지 않는 코드 존재
+```java
+HttpServletRequest request, HttpServletResponse response
+```
+- 위 코드를 사용할 때도 있고 사용하지 않을 때도 있다. 
+- `HttpServletRequest`, `HttpServletResponse`를 사용하는 코드는 테스트 케이스 작성이 어렵다.
+<br>
+  
+### Front Controller
+결국 정리하자면, 현재의 Controller는 공통 처리가 어렵다는 단점이 있다. 이를 해결하려면 Controller 호출 전에 공통 기능을 먼저 처리해야 한다.  
+**→ Front Controller 패턴을 도입해 공통 기능을 처리하자!**
+  
