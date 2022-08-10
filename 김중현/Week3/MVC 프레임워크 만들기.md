@@ -50,3 +50,166 @@ public interface ControllerV1 {
 ```
 - 서블릿과 비슷한 모양으로 controller를 인터페이스로 구현해두고, 각 controller들은 이 인터페이스를 구현하도록 설계한다.
 - 프론트 컨트롤러는 이 인터페이스를 호출해 구현과 관계 없이 로직의 일관성을 유지할 수 있다.
+<br>
+<br>
+<br>
+<br>
+
+
+```md
+ControllerV1 인터페이스를 구현한 회원 등록, 저장, 조회(목록) 컨트롤러를 만들자!
+```
+
+#### MemberFormControllerV1
+> 회원 등록 컨트롤러
+```java
+package hello.servlet.web.frontcontroller.v1.controller;
+
+import hello.servlet.web.frontcontroller.v1.ControllerV1;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+public class MemberFormControllerV1 implements ControllerV1 {
+
+    @Override
+    public void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String viewPath = "/WEB-INF/views/new-form.jsp"; //View 그대로 사용
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath); //Controller에서 View로 이동할 때 사용
+        dispatcher.forward(request, response); //Controller가 View 호출
+    }
+}
+```
+<br>
+
+#### MemberSaveControllerV1
+> 회원 저장 컨트롤러
+```java
+package hello.servlet.web.frontcontroller.v1.controller;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import hello.servlet.web.frontcontroller.v1.ControllerV1;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+public class MemberSaveControllerV1 implements ControllerV1 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+
+        Member member = new Member(username, age);
+        System.out.println("member = " + member);
+        memberRepository.save(member);
+
+        //Model에 데이터를 보관
+        request.setAttribute("member", member); //request 내부 저장소에 member 저장
+
+        String viewPath = "/WEB-INF/views/save-result.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+```
+<br>
+
+#### MemberListControllerV1
+> 회원 목록 컨트롤러
+```java
+package hello.servlet.web.frontcontroller.v1.controller;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import hello.servlet.web.frontcontroller.v1.ControllerV1;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+
+public class MemberListControllerV1 implements ControllerV1 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        System.out.println("MvcMemberListServlet.service");
+        List<Member> members = memberRepository.findAll();
+
+        //Model에 담기
+        request.setAttribute("members", members); //key, value
+
+        String viewPath = "/WEB-INF/views/members.jsp";
+        RequestDispatcher dispatcher = request.getRequestDispatcher(viewPath);
+        dispatcher.forward(request, response);
+    }
+}
+```
+- 내부 로직은 기존에 구현했던 서블릿과 거의 동일하다.
+<br>
+<br>
+<br>
+<br>
+
+#### FrontControllerServletV1
+> 프론트 컨트롤러
+```java
+package hello.servlet.web.frontcontroller.v1;
+
+import hello.servlet.web.frontcontroller.v1.controller.MemberFormControllerV1;
+import hello.servlet.web.frontcontroller.v1.controller.MemberListControllerV1;
+import hello.servlet.web.frontcontroller.v1.controller.MemberSaveControllerV1;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@WebServlet(name = "FrontControllerServletV1", urlPatterns = "/front-controller/v1/*")
+public class FrontControllerServletV1 extends HttpServlet {
+
+    private Map<String, ControllerV1> controllerMap = new HashMap<>(); //어떤 url이 호출되면 ControllerV1을 꺼내 호출해라
+
+    public FrontControllerServletV1() { //이 생성자가 호출되면 각 url에 맞는 controller가 매핑된다.
+        controllerMap.put("/front-controller/v1/members/new-form", new MemberFormControllerV1());
+        controllerMap.put("/front-controller/v1/members/save", new MemberSaveControllerV1());
+        controllerMap.put("/front-controller/v1/members", new MemberListControllerV1());
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("FrontControllerServletV1.service");
+
+        String requestURI = request.getRequestURI(); //request에서 url을 가져와 requestURI에 저장
+
+        ControllerV1 controller = controllerMap.get(requestURI); //controllerV1 인터페이스를 이용해 각 URI에 매핑되는 controller를 찾을 수 있다.
+        if (controller == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        controller.process(request, response); //다형성으로 인헤 오버라이드된 메소드가 실행된다.
+        //앞에서 매핑된 컨트롤러의 process 메소드가 실행되므로, 해당 컨트롤러의 로직이 그대로 실행되는 것이다.
+    }
+}
+```
