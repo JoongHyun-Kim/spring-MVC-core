@@ -432,3 +432,31 @@ FrontController는 해당 URL과 맞는 controller를 매핑하고, 조회한다
 반환된 MyView 객체의 render() 메소드를 실행해 forward 로직을 수행하고 JSP를 실행한다.
 ```
 → 이제 각 컨트롤러는 MyView 객체를 생성해 반환하기만 하면 되고, 반환된 객체를 이용해 forward 로직을 수행해주는 것은 `FrontController`다.
+<br>
+<br>
+<br>
+<br>
+
+## V3 - Model 추가
+### 목표
+```
+1) 서블릿 종속성 제거
+컨트롤러 입장에서 현재 HttpServletRequest와 HttpServletResponse가 필요 없다.
+요청 파라미터의 정보는 자바의 Map을 활용해 넘기도록 하면, 지금 구조에서는 컨트롤러가 서블릿 기술을 몰라도 제대로 동작할 수 있다.
+그리고, request 객체를 Model로 사용하는 대신, 별도의 Model 객체를 만들어 반환하면 된다. (여태까지는 request를 model로 보고 setAttribute를 이용해 안에 데이터를 담아 렌더링)
+이렇게 변경해 컨트롤러가 서블릿 기술을 전혀 사용하지 않도록 해보자!
+
+2) 뷰 이름 중복 제거
+현재 컨트롤러에서 지정하는 뷰 이름에 중복이 있다.
+컨트롤러는 뷰의 논리 이름을 반환하고, 물리 위치의 이름은 프론트 컨트롤러에서 처리하도록 단순화하자!
+이렇게 변경하면 후에 뷰의 폴더 위치가 이동해도 여러 뷰를 직접 수정할 필요 없이 프론트 컨트롤러만 수정하면 된다.
+```
+<br>
+<br>
+
+### V3 구조
+<img width="600" alt="스크린샷 2022-08-14 오전 2 35 47" src="https://user-images.githubusercontent.com/80838501/184504821-45f8a319-2eac-46a4-a7af-0eb65b423d2c.png">
+
+- Controller에서 FrontController로 View가 아닌 `ModelView`(Model + View)를 반환한다.
+- `viewResolver`에서 뷰의 논리 이름을 물리 위치의 이름으로 변경한다.
+- Model을 직접 만들고 View의 이름까지 전달하는 객체인 `ModelView`를 만들자!
