@@ -716,3 +716,187 @@ public class MyView {
 }
 ```
 - JSP는 `request.getAttribute()`로 데이터를 조회하기 때문에 모델의 데이터를 꺼내 `request.setAttribute()`로 담아두는 단계가 필요하다.
+<br>
+<br>
+<br>
+<br>
+
+## V4 - 단순하고 실용적인 컨트롤러
+### V4 구조
+<img width="600" alt="스크린샷 2022-08-15 오후 12 18 24" src="https://user-images.githubusercontent.com/80838501/184571515-3daafa1c-4ba2-4fcc-ac9f-053cc4ef164c.png">
+
+- Controller가 `ModelView`를 반환하지 않고 `ViewName`만 반환한다.
+<br>
+<br>
+
+#### ControllerV4
+> 인터페이스
+```java
+package hello.servlet.web.frontcontroller.v4;
+
+import java.util.Map;
+
+public interface ControllerV4 {
+
+    /**
+     *
+     * @param paramMap
+     * @param model
+     * @return viewName
+     */
+    String process(Map<String, String> paramMap, Map<String, Object> model);
+}
+```
+- model 객체를 파라미터로 전달하면 되기 때문에 ModelView가 없고, 결과로 뷰의 이름만 반환해주면 된다.
+<br>
+<br>
+<br>
+
+#### MemberFormControllerV4
+```java
+package hello.servlet.web.frontcontroller.v4.controller;
+
+import hello.servlet.web.frontcontroller.v4.ControllerV4;
+
+import java.util.Map;
+
+public class MemberFormControllerV4 implements ControllerV4 {
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        return "new-form"; //ModelView 반환할 필요 없이 논리 이름만 반환
+    }
+}
+```
+- 뷰의 논리 이름만 반환한다.
+<br>
+<br>
+<br>
+
+#### MemberSaveControllerV4
+```java
+package hello.servlet.web.frontcontroller.v4.controller;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import hello.servlet.web.frontcontroller.v4.ControllerV4;
+
+import java.util.Map;
+
+public class MemberSaveControllerV4 implements ControllerV4 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        String username = paramMap.get("username");
+        int age = Integer.parseInt(paramMap.get("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);
+
+        model.put("member", member);
+        return "save-result";
+    }
+}
+```
+- model이 파라미터로 전달되기 때문에 직접 모델을 생성하지 않아도 된다.
+- 논리 이름을 반환한다.
+<br>
+<br>
+
+#### MemberListControllerV4
+```java
+package hello.servlet.web.frontcontroller.v4.controller;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import hello.servlet.web.frontcontroller.v4.ControllerV4;
+
+import java.util.List;
+import java.util.Map;
+
+public class MemberListControllerV4 implements ControllerV4 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @Override
+    public String process(Map<String, String> paramMap, Map<String, Object> model) {
+        List<Member> members = memberRepository.findAll();
+
+        model.put("members", members);
+        return "members";
+    }
+}
+```
+- 마찬가지로, 논리 이름을 반환한다.
+<br>
+<br>
+
+#### FrontControllerServletV4
+```java
+package hello.servlet.web.frontcontroller.v4;
+
+import hello.servlet.web.frontcontroller.MyView;
+
+import hello.servlet.web.frontcontroller.v4.controller.MemberFormControllerV4;
+import hello.servlet.web.frontcontroller.v4.controller.MemberListControllerV4;
+import hello.servlet.web.frontcontroller.v4.controller.MemberSaveControllerV4;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@WebServlet(name = "FrontControllerServletV4", urlPatterns = "/front-controller/v4/*")
+public class FrontControllerServletV4 extends HttpServlet {
+
+    private Map<String, ControllerV4> controllerMap = new HashMap<>(); //어떤 url이 호출되면 ControllerV2를 꺼내 호출
+
+    public FrontControllerServletV4() { //이 생성자가 호출되면 각 url에 맞는 controller가 매핑된다.
+        controllerMap.put("/front-controller/v4/members/new-form", new MemberFormControllerV4());
+        controllerMap.put("/front-controller/v4/members/save", new MemberSaveControllerV4());
+        controllerMap.put("/front-controller/v4/members", new MemberListControllerV4());
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String requestURI = request.getRequestURI(); //request에서 URI를 가져와 requestURI에 저장
+
+        ControllerV4 controller = controllerMap.get(requestURI); //controllerV2 인터페이스를 이용해 각 URI에 매핑되는 controller를 찾을 수 있다.
+        if (controller == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        Map<String, String> paramMap = createParamMap(request);
+        Map<String, Object> model = new HashMap<>();
+
+        String viewName = controller.process(paramMap, model);
+
+        MyView view = viewResolver(viewName);
+
+        view.render(model, request, response);
+    }
+
+    //논리 이름을 가지고 실제 물리 이름 생성
+    private MyView viewResolver(String viewName) {
+        return new MyView("/WEB-INF/views/" + viewName + ".jsp");
+    }
+
+    private Map<String, String> createParamMap(HttpServletRequest request) {
+        Map<String, String> paramMap = new HashMap<>();
+        request.getParameterNames().asIterator() //HttpServletRequest서 모든 parameter name을 다 가져 하나씩 돌리면서
+                .forEachRemaining(paramName -> paramMap.put(paramName, request.getParameter(paramName))); //name을 key로 하면서 request.getParameter로 모든 value 다 꺼내오기
+
+        return paramMap;
+    }
+}
+```
+- 모델 객체를 프론트 컨트롤러가 직접 생성해 넘겨주는 것으로 수정한다. 각 컨트롤러에서 모델 객체에 값을 담으면 된다.
+- V3와 동일하게 컨트롤러가 반환한 논리 이름을 이용해 실제 물리 이름을 찾을 수 있다.
