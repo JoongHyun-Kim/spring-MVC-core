@@ -1086,3 +1086,79 @@ public class FrontControllerServletV5 extends HttpServlet {
     }
 }
 ```
+<br>
+<br>
+<br>
+<br>
+
+> FrontControllerServletV5에 ControllerV4 기능도 새로 추가해보자!
+#### FrontControllerServletV5
+```java
+...
+private void initHandlerMappingMap() {
+    handlerMappingMap.put("/front-controller/v5/v3/members/new-form", new MemberFormControllerV3());
+    handlerMappingMap.put("/front-controller/v5/v3/members/save", new MemberSaveControllerV3());
+    handlerMappingMap.put("/front-controller/v5/v3/members", new MemberListControllerV3());
+
+    handlerMappingMap.put("/front-controller/v5/v4/members/new-form", new MemberFormControllerV4());
+    handlerMappingMap.put("/front-controller/v5/v4/members/save", new MemberSaveControllerV4());
+    handlerMappingMap.put("/front-controller/v5/v4/members", new MemberListControllerV4());
+}
+
+private void initHandlerAdapters() {
+    handlerAdapters.add(new ControllerV3HandlerAdapter());
+    handlerAdapters.add(new ControllerV4HandlerAdapter());
+}
+...
+```
+- `handlerMappingMap`에 ControllerV4를 사용하는 컨트롤러를 추가하고 해당 컨트롤러를 처리할 수 있는 어댑터인 `ControllerV4HandlerAdapter`를 추가한다.
+<br>
+<br>
+<br>
+
+#### ControllerV4HandlerAdapter
+```java
+package hello.servlet.web.frontcontroller.v5.adapter;
+
+import hello.servlet.web.frontcontroller.ModelView;
+import hello.servlet.web.frontcontroller.v4.ControllerV4;
+import hello.servlet.web.frontcontroller.v5.MyHandlerAdapter;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ControllerV4HandlerAdapter implements MyHandlerAdapter {
+
+    @Override
+    public boolean supports(Object handler) { //ControllerV4인 경우에만 처리
+        return (handler instanceof ControllerV4);
+    }
+
+    @Override
+    public ModelView handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws SerialException, IOException {
+        ControllerV4 controller = (ControllerV4) handler; //캐스팅
+
+        Map<String, String> paramMap = createParamMap(request);
+        HashMap<String, Object> model = new HashMap<>();
+
+        String viewName = controller.process(paramMap, model);
+
+        ModelView mv = new ModelView(viewName); //컨트롤러가 반환한 viewName을 이용해 ModelView로 바꾸어 형식을 맞춰 반환
+        mv.setModel(model);
+
+        return mv;
+    }
+
+    private Map<String, String> createParamMap(HttpServletRequest request) {
+        Map<String, String> paramMap = new HashMap<>();
+        request.getParameterNames().asIterator() //HttpServletRequest서 모든 parameter name을 다 가져 하나씩 돌리면서
+                .forEachRemaining(paramName -> paramMap.put(paramName, request.getParameter(paramName))); //name을 key로 하면서 request.getParameter로 모든 value 다 꺼내오기
+
+        return paramMap;
+    }
+}
+```
