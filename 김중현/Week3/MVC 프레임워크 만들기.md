@@ -900,3 +900,189 @@ public class FrontControllerServletV4 extends HttpServlet {
 ```
 - 모델 객체를 프론트 컨트롤러가 직접 생성해 넘겨주는 것으로 수정한다. 각 컨트롤러에서 모델 객체에 값을 담으면 된다.
 - V3와 동일하게 컨트롤러가 반환한 논리 이름을 이용해 실제 물리 이름을 찾을 수 있다.
+<br>
+<br>
+<br>
+<br>
+
+## V5 - 유연한 컨트롤러
+> 만약 한 프로젝트에서 여러 Controller 버전으로 개발하고 싶은 경우에는 어떻게 해야 할까?
+<br>
+
+### 어댑터 패턴
+여태까지는 프론트 컨트롤러가 한 가지 방식의 컨트롤러 인터페이스만 사용할 수 있었다. 이제 어댑터 패턴을 사용해 프로트 컨트롤러가 다양한 방식의 컨트롤러를 처리할 수 있도록 변경해보자!
+<br>
+<br>
+
+### V5 구조
+<img width="841" alt="스크린샷 2022-08-15 오후 2 00 37" src="https://user-images.githubusercontent.com/80838501/184579198-879c7eb3-f275-4116-af1d-d5a92f2d6e1b.png">
+
+```
+핸들러 어댑터: 중간에서 어댑터 역할을 하며 다양한 종류의 컨트롤러를 호출할 수 있다.
+핸들러: 컨트롤러를 더 넓은 범위를 의미하는 핸들러로 이름을 변경했다. 어댑터가 있기 때문에 꼭 컨트롤러뿐만 아니라 해당하는 종류의 어댑터만 있으면 다 처리할 수 있기 때문이다.
+```
+<br>
+<br>
+
+#### MyHandlerAdapter
+> 어댑터 인터페이스
+```java
+package hello.servlet.web.frontcontroller.v5;
+
+import hello.servlet.web.frontcontroller.ModelView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+import java.io.IOException;
+
+public interface MyHandlerAdapter {
+
+    boolean supports(Object handler); //어댑터가 해당 컨트롤러(핸들러)를 처리할 수 있는지 판단
+
+    ModelView handle(HttpServletRequest request, HttpServletResponse response, Object handler) throws SerialException, IOException;
+}
+```
+- 어댑터는 실제 컨트롤러(핸들러)를 호출하고, 결과로 ModelView를 반환해야 한다.
+- 전에는 프론트 컨트롤러가 각 컨트롤러를 호출했지만, 이제는 어댑터를 통해 실제 컨트롤러가 호출된다.
+<br>
+<br>
+<br>
+
+ControllerV3를 지원하는 어댑터를 구현해보자!
+#### ControllerV3HandlerAdapter
+```java
+package hello.servlet.web.frontcontroller.v5.adapter;
+
+import hello.servlet.web.frontcontroller.ModelView;
+import hello.servlet.web.frontcontroller.v3.ControllerV3;
+import hello.servlet.web.frontcontroller.v5.MyHandlerAdapter;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ControllerV3HandlerAdapter implements MyHandlerAdapter {
+
+    @Override
+    public boolean supports(Object handler) {
+        return (handler instanceof ControllerV3); //ControllerV3 인터페이스를 구현한 무언가가 넘어오게 되면 True 반환. 다른 것을 구현한 것들은 전부 False 반환.
+    }
+
+    @Override
+    public ModelView handle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        ControllerV3 controller = (ControllerV3) handler; //이미 ControllerV3만 걸러진 상태이기 때문에 casting해서 사용해도 된다.
+
+        Map<String, String> paramMap = createParamMap(request);
+        ModelView mv = controller.process(paramMap);
+
+        return mv;
+    }
+
+    private Map<String, String> createParamMap(HttpServletRequest request) {
+        Map<String, String> paramMap = new HashMap<>();
+        request.getParameterNames().asIterator() //HttpServletRequest서 모든 parameter name을 다 가져 하나씩 돌리면서
+                .forEachRemaining(paramName -> paramMap.put(paramName, request.getParameter(paramName))); //name을 key로 하면서 request.getParameter로 모든 value 다 꺼내오기
+
+        return paramMap;
+    }
+}
+```
+<br>
+<br>
+<br>
+
+#### FrontControllerServletV5
+```java
+package hello.servlet.web.frontcontroller.v5;
+
+import hello.servlet.web.frontcontroller.ModelView;
+import hello.servlet.web.frontcontroller.MyView;
+import hello.servlet.web.frontcontroller.v3.controller.MemberFormControllerV3;
+import hello.servlet.web.frontcontroller.v3.controller.MemberListControllerV3;
+import hello.servlet.web.frontcontroller.v3.controller.MemberSaveControllerV3;
+import hello.servlet.web.frontcontroller.v5.adapter.ControllerV3HandlerAdapter;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.rowset.serial.SerialException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@WebServlet(name = "frontControllerServletV5" ,urlPatterns = "/front-controller/v5/*")
+public class FrontControllerServletV5 extends HttpServlet {
+
+    private final Map<String, Object> handlerMappingMap = new HashMap<>(); //아무 버전이나 다 들어갈 수 있도록
+    private final List<MyHandlerAdapter> handlerAdapters = new ArrayList<>();//List가 여러 개 담겨있고 그 중에 찾아 써야되기 때문에
+
+    public FrontControllerServletV5() {
+        initHandlerMappingMap();
+        initHandlerAdapters();
+    }
+
+    private void initHandlerMappingMap() { //핸들러 매핑 초기화
+        handlerMappingMap.put("/front-controller/v5/v3/members/new-form", new MemberFormControllerV3());
+        handlerMappingMap.put("/front-controller/v5/v3/members/save", new MemberSaveControllerV3());
+        handlerMappingMap.put("/front-controller/v5/v3/members", new MemberListControllerV3());
+    }
+
+    private void initHandlerAdapters() { //어댑터 초기화
+        handlerAdapters.add(new ControllerV3HandlerAdapter());
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        //handler 찾기
+        Object handler = getHandler(request);
+        if (handler == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        //HandlerAdapter 찾기
+        MyHandlerAdapter adapter = getHandlerAdapter(handler);
+
+        //실제 어댑터 호출
+        //어댑터는 핸들러를 호출하고 그 결과를 어댑터에 맞추어 반환
+        ModelView mv = null;
+        try {
+            mv = adapter.handle(request, response, handler);
+        } catch (SerialException e) {
+            e.printStackTrace();
+        }
+
+        String viewName = mv.getViewName(); //논리 이름
+        MyView view = viewResolver(viewName);
+
+        view.render(mv.getModel(), request, response);
+    }
+
+    private Object getHandler(HttpServletRequest request) { //handlerMappingMap에서 URL에 매핑된 핸들러 객체를 찾아 반환
+        String requestURI = request.getRequestURI();
+        return handlerMappingMap.get(requestURI); //요청이 오면 handler를 찾는다.
+    }
+
+    private MyHandlerAdapter getHandlerAdapter(Object handler) { //어댑터 찾기
+        for (MyHandlerAdapter adapter : handlerAdapters) {
+            if (adapter.supports(handler)) {
+                return adapter;
+            }
+        }
+        throw new IllegalArgumentException("handler adapter를 찾을 수 없습니다. handler = " + handler);
+    }
+
+    private MyView viewResolver(String viewName) {
+        return new MyView("/WEB-INF/views/" + viewName + ".jsp");
+    }
+}
+```
