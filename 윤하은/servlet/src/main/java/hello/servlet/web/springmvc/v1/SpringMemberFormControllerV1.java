@@ -1,4 +1,4 @@
-package hello.servlet.web.springmvc.old.v1;
+package hello.servlet.web.springmvc.v1;
 
 import hello.servlet.web.frontcontroller.ModelView;
 import org.springframework.stereotype.Controller;
