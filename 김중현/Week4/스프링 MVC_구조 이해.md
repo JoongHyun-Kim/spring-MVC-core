@@ -98,3 +98,127 @@ protected void render(ModelAndView mv, HttpServletRequest request, HttpServletRe
 뷰 리졸버: org.springframework.web.servlet.ViewResolver
 뷰: org.springframework.web.servlet.View
 ```
+<br>
+<br>
+<br>
+<br>
+
+## 핸들러 매핑과 핸들러 어댑터
+- 지금은 사용하지 않지만 과거에 주로 사용했던, 스프링이 제공하는 간단한 컨트롤러를 예시로 핸들러 매핑과 어댑터에 대해 알아보자!
+<br>
+
+#### Controller 인터페이스
+> 과거 버전 스프링 컨트롤러
+```java
+public interface Controller {
+      ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception;
+}
+```
+<br>
+
+#### OldController
+> 구현체
+```java
+package hello.servlet.web.springmvc.old;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@Component("/springmvc/old-controller")
+public class OldController implements Controller {
+     @Override
+     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+          System.out.println("OldController.handleRequest");
+          return null;
+     }
+}
+```
+- `@Component`: 이 컨트롤러는 /springmvc/old-controller라는 이름으로 스프링 빈이 등록되었고, 빈 이름으로 URL을 매핑할 것이다.
+<br>
+<br>
+
+스프링 MVC 구조를 다시 살펴 보자. 이 컨트롤러가 호출되려면 무엇이 필요할까?
+1. HandlerMapping
+   - HandlerMapping에서 이 컨트롤러를 찾을 수 있어야 한다.
+   - Ex) 스프링 빈의 이름으로 핸들러를 찾을 수 있는 핸들러 매핑이 필요하다.
+2. HandlerAdapter
+   - 핸들러 매핑을 통해 찾은 핸들러를 실행할 수 있는 핸들러 어댑터가 필요하다.
+   - Ex) Controller 인터페이스를 실행할 수 있는 핸들러 어댑터를 찾고 실행해야 한다.
+<br>
+<br>
+
+### 스프링 부트가 자동 등록하는 핸들러 매핑과 핸들러 어댑터
+#### HandlerMapping
+```java
+0 = RequestMappingHandlerMapping → 애노테이션 기반 컨트롤러인 @RequestMapping에서 사용
+1 = BeanNameUrlHandlerMapping → 스프링 빈 이름으로 핸들러를 찾는다.
+```
+<br>
+<br>
+
+#### HandlerAdapter
+```java
+0 = RequestMappingHandlerAdapter → 애노테이션 기반 컨트롤러인 @RequestMapping에서 사용
+1 = HttpRequestHandlerAdapter → HttpRequestHandler 처리
+2 = SimpleControllerHandlerAdapter → Controller 인터페이스 처리 (애노테이션이 아닌, 과거에 사용한 형태)
+```
+- 핸들러 매핑과 핸들러 어댑터 모두 위 순서대로 찾고, 만약 없으면 다음 순서로 넘어간다.
+<br>
+<br>
+
+#### OldController 예제
+1. 핸들러 매핑으로 핸들러 조회
+    - HandlerMapping 을 순서대로 실행해서 핸들러를 찾는다.
+    - 이 경우, 빈 이름으로 핸들러를 찾아야 하기 때문에 이름 그대로 빈 이름으로 핸들러를 찾아주는 BeanNameUrlHandlerMapping가 실행에 성공하고 핸들러인 OldController를 반환한다.
+2. 핸들러 어댑터 조회
+    - HandlerAdapter의 supports()를 순서대로 호출한다. SimpleControllerHandlerAdapter가 Controller 인터페이스를 지원하므로 대상이 된다.
+3. 핸들러 어댑터 실행
+    - 디스패처 서블릿이 조회한 SimpleControllerHandlerAdapter를 실행하면서 핸들러 정보도 함께 넘겨준다.
+    - SimpleControllerHandlerAdapter는 핸들러인 OldController 를 내부에서 실행하고, 그 결과를 반환한다.
+<br>
+<br>
+
+### HttpRequestHandler 예제
+#### HttpRequestHandler 인터페이스
+```java
+public interface HttpRequestHandler {
+   void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException;
+}
+```
+<br>
+<br>
+
+#### MyHttpRequestHandler
+```java
+package hello.servlet.web.springmvc.old;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.HttpRequestHandler;
+     
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component("/springmvc/request-handler")
+public class MyHttpRequestHandler implements HttpRequestHandler {
+      
+      @Override
+      public void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+          System.out.println("MyHttpRequestHandler.handleRequest");
+      }
+}
+```
+1. 핸들러 매핑으로 핸들러 조회
+    - HandlerMapping 을 순서대로 실행해서 핸들러를 찾는다.
+    - 이 경우 빈 이름으로 핸들러를 찾아야 하기 때문에 이름 그대로 빈 이름으로 핸들러를 찾아주는 BeanNameUrlHandlerMapping가 실행에 성공하고 핸들러인 MyHttpRequestHandler를 반환한다.
+2. 핸들러 어댑터 조회
+    - HandlerAdapter의 supports()를 순서대로 호출한다.
+    - HttpRequestHandlerAdapter가 HttpRequestHandler 인터페이스를 지원하므로 대상이 된다.
+3. 핸들러 어댑터 실행
+    - 디스패처 서블릿이 조회한 HttpRequestHandlerAdapter를 실행하면서 핸들러 정보도 함께 넘겨준다.
+    - HttpRequestHandlerAdapter는 핸들러인 MyHttpRequestHandler를 내부에서 실행하고, 그 결과를 반환한다.
