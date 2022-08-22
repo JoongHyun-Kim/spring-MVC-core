@@ -252,3 +252,13 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
    - InternalResourceView는 JSP처럼 포워드 forward()를 호출해 처리할 수 있는 경우에 사용한다.
 5. view.render()
    - view.render()가 호출되고 InternalResourceView는 forward()를 사용해서 JSP를 실행한다.
+<br>
+<br>
+<br>
+<br>
+
+## 스프링 MVC 시작하기
+### @RequestMapping
+> 스프링은 애노테이션을 활용한 매우 유연하고 실용적인 컨트롤러를 만들었는데, 바로 @RequestMapping 애노테이션을 사용하는 컨트롤러이다.
+- 가장 우선순위가 높은 핸들러 매핑과 핸들러 어댑터는 `RequestMappingHandlerMapping`, `RequestMappingHandlerAdapter`이다.
+   - 지금 스프링에서 주로 사용하는 애노테이션 기반의 컨트롤러를 지원하는 핸들러 매핑과 어댑터이며, 실무에서는 99.9% 이 방식의 컨트롤러를 사용한다.
