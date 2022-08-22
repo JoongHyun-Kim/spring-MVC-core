@@ -262,3 +262,12 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
 > 스프링은 애노테이션을 활용한 매우 유연하고 실용적인 컨트롤러를 만들었는데, 바로 @RequestMapping 애노테이션을 사용하는 컨트롤러이다.
 - 가장 우선순위가 높은 핸들러 매핑과 핸들러 어댑터는 `RequestMappingHandlerMapping`, `RequestMappingHandlerAdapter`이다.
    - 지금 스프링에서 주로 사용하는 애노테이션 기반의 컨트롤러를 지원하는 핸들러 매핑과 어댑터이며, 실무에서는 99.9% 이 방식의 컨트롤러를 사용한다.
+<br>
+<br>
+<br>
+<br>
+
+## 스프링 MVC - 컨트롤러 통합
+> @RequestMapping을 보면 클래스 단위가 아닌 메소드 단위에 적용되어 있는데, 컨트롤러 클래스를 유연하게 하나로 통합할 수 있다.
+### 컨트롤러 통합
+### 조합
