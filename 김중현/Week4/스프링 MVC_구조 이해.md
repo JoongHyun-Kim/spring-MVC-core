@@ -109,7 +109,8 @@ protected void render(ModelAndView mv, HttpServletRequest request, HttpServletRe
 <br>
 
 #### Controller 인터페이스
-> 과거 버전 스프링 컨트롤러
+> 과거 버전 스프링 컨트롤러 <br>
+> V3 버전과 유사
 ```java
 public interface Controller {
       ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception;
@@ -145,7 +146,7 @@ public class OldController implements Controller {
 스프링 MVC 구조를 다시 살펴 보자. 이 컨트롤러가 호출되려면 무엇이 필요할까?
 1. HandlerMapping
    - HandlerMapping에서 이 컨트롤러를 찾을 수 있어야 한다.
-   - Ex) 스프링 빈의 이름으로 핸들러를 찾을 수 있는 핸들러 매핑이 필요하다.
+   - Ex) **스프링 빈의 이름**으로 핸들러를 찾을 수 있는 핸들러 매핑이 필요하다.
 2. HandlerAdapter
    - 핸들러 매핑을 통해 찾은 핸들러를 실행할 수 있는 핸들러 어댑터가 필요하다.
    - Ex) Controller 인터페이스를 실행할 수 있는 핸들러 어댑터를 찾고 실행해야 한다.
@@ -216,7 +217,8 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
 ```
 1. 핸들러 매핑으로 핸들러 조회
     - HandlerMapping 을 순서대로 실행해서 핸들러를 찾는다.
-    - 이 경우 빈 이름으로 핸들러를 찾아야 하기 때문에 이름 그대로 빈 이름으로 핸들러를 찾아주는 BeanNameUrlHandlerMapping가 실행에 성공하고 핸들러인 MyHttpRequestHandler를 반환한다.
+    - 이 경우 빈 이름으로 핸들러를 찾아야 하기 때문에 이름 그대로 빈 이름으로 핸들러를 찾아주는 BeanNameUrlHandlerMapping가 실행에 성공하고<br>
+      핸들러인 MyHttpRequestHandler를 반환한다.
 2. 핸들러 어댑터 조회
     - HandlerAdapter의 supports()를 순서대로 호출한다.
     - HttpRequestHandlerAdapter가 HttpRequestHandler 인터페이스를 지원하므로 대상이 된다.
