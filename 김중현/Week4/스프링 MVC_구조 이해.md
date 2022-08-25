@@ -232,7 +232,15 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
 
 ## 뷰 리졸버
 ### 뷰 리졸버 - InternalResourceViewResolver
-스프링 부트는 `InternalResourceViewResolver`라는 뷰 리졸버를 자동으로 등록하는데, application.properties에 등록한 spring.mvc.view.prefix, spring.mvc.view.suffix 설정 정보를 사용해서 등록한다.
+#### application.properties
+```java
+logging.level.org.apache.coyote.http11=debug
+
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
+```
+스프링 부트는 `InternalResourceViewResolver`라는 뷰 리졸버를 자동으로 등록하는데, application.properties에 등록한 `spring.mvc.view.prefix`, 
+`spring.mvc.view.suffix` 설정 정보를 사용해 등록한다.
 <br>
 <br>
 
@@ -242,6 +250,8 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
 1 = BeanNameViewResolver → 빈 이름으로 뷰를 찾아 반환
 2 = InternalResourceViewResolver → JSP를 처리할 수 있는 뷰를 반환
 ```
+<br>
+<br>
 
 #### 동작 방식
 1. 핸들러 어댑터 호출
@@ -251,6 +261,7 @@ public class MyHttpRequestHandler implements HttpRequestHandler {
    - BeanNameViewResolver는 new-form이라는 이름의 스프링 빈으로 등록된 뷰를 찾아야 하는데 없으므로, InternalResourceViewResolver가<br> 호출된다.
 3. InternalResourceViewResolver
    - 이 뷰 리졸버는 InternalResourceView를 반환한다. 
+   - InternalResource: 내부에서 자원이 이동하는 것 
 4. 뷰 - InternalResourceView
    - InternalResourceView는 JSP처럼 포워드 forward()를 호출해 처리할 수 있는 경우에 사용한다.
 5. view.render()
