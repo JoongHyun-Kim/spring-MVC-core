@@ -31,7 +31,6 @@ public class RequestParamController {
         response.getWriter().write("ok");
 
     }
-
     @ResponseBody
     @RequestMapping("/request-param-v2")
     public String requestParamV2(@RequestParam("username") String memberName,
@@ -43,6 +42,7 @@ public class RequestParamController {
 
     }
 
+    //http 요청 파라미터 변수명과 메소드 파라미터 변수명이 같으면 @RequestParam(name="xxx") 에서 name 생략가능
     @ResponseBody
     @RequestMapping("/request-param-v3")
     public String requestParamV3(@RequestParam String username,
@@ -55,6 +55,7 @@ public class RequestParamController {
     }
 
 
+    //타입이 기본형이면 @RequestParam 생략가능
     @ResponseBody
     @RequestMapping("/request-param-v4")
     public String requestParamV4(String username,
