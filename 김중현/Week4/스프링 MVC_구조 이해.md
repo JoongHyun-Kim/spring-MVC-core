@@ -396,9 +396,85 @@ public class SpringMemberListControllerV1 {
 <br>
 
 ## 스프링 MVC - 컨트롤러 통합
-> @RequestMapping을 보면 클래스 단위가 아닌 메소드 단위에 적용되어 있는데, 컨트롤러 클래스를 유연하게 하나로 통합할 수 있다.
+> @RequestMapping을 보면 클래스 단위가 아닌 메소드 단위에 적용되어 있어 컨트롤러 클래스를 하나로 통합할 수 있다.
 ### 컨트롤러 통합
+```java
+package hello.servlet.web.springmvc.v2;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ *클래스 단위->메서드 단위
+ * @RequestMapping 클래스 레벨과 메서드 레벨 조합
+ * */
+@Controller
+@RequestMapping("/springmvc/v2/members")
+public class SpringMemberControllerV2 {
+
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @RequestMapping("/new-form")
+    public ModelAndView newForm() {
+        return new ModelAndView("new-form");
+    }
+
+    @RequestMapping("/save")
+    public ModelAndView save(HttpServletRequest request, HttpServletResponse
+            response) {
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);
+
+        ModelAndView mav = new ModelAndView("save-result");
+        mav.addObject("member", member);
+        return mav;
+    }
+    @RequestMapping
+    public ModelAndView members() {
+        List<Member> members = memberRepository.findAll();
+
+        ModelAndView mav = new ModelAndView("members");
+        mav.addObject("members", members);
+        return mav;
+    } 
+}
+```
+- 연관성이 있는 여러 컨트롤러를 통합할 수 있다.
+<br>
+<br>
+
 ### 조합
+```
+@RequestMapping("/springmvc/v2/members/new-form")
+@RequestMapping("/springmvc/v2/members")
+@RequestMapping("/springmvc/v2/members/save")
+```
+- /springmvc/v2/members가 중복되므로, 아래와 같이 클래스 레벨에 @RequestMapping을 두어 중복된 부분을 제거할 수 있다.
+```java
+@Controller
+@RequestMapping("/springmvc/v2/members")
+public class SpringMemberControllerV2 {}
+```
+<br>
+
+→ 조합 결과
+- 클래스 레벨 @RequestMapping("/springmvc/v2/members")
+   - 메서드 레벨 @RequestMapping("/new-form") <br>
+   → /springmvc/v2/members/new-form 
+   - 메서드 레벨 @RequestMapping("/save") <br>
+   → /springmvc/v2/members/save
+   - 메서드 레벨 @RequestMapping <br>
+   → /springmvc/v2/members
 <br>
 <br>
 <br>
