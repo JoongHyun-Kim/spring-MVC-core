@@ -278,6 +278,120 @@ spring.mvc.view.suffix=.jsp
    - 지금 스프링에서 주로 사용하는 애노테이션 기반의 컨트롤러를 지원하는 핸들러 매핑과 어댑터이며, 실무에서는 99.9% 이 방식의 컨트롤러를 사용한다.
 <br>
 <br>
+
+> 지금까지 만들었던 프레임워크에서 사용하던 컨트롤러를 `@RequestMapping` 기반의 스프링 MVC 컨트롤러 변경해보자!
+#### SpringMemberFormControllerV1
+> 회원 등록 폼
+```java
+package hello.servlet.web.springmvc.v1;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+@Controller
+public class SpringMemberFormControllerV1 {
+
+    @RequestMapping("/springmvc/v1/members/new-form")
+    public ModelAndView process() {
+        return new ModelAndView("new-form");
+    }
+}
+```
+- @Controller 
+    - 스프링이 자동으로 스프링 빈으로 등록한다. (내부에 @Component 애노테이션이 포함되어 있어서 컴포넌트 스캔의 대상)
+    - 스프링 MVC에서 애노테이션 기반 컨트롤러로 인식한다.
+- @RequestMapping
+    - 해당 URL이 호출되면 이 메서드가 호출되고, 요청 정보를 매핑한다. 
+    - 애노테이션을 기반으로 동작하기 때문에 메소드의 이름은 임의로 지어도 된다.
+- ModelAndView
+    - 모델과 뷰 정보를 담아서 반환하면 된다.
+<br>
+<br>
+
+#### 참고
+RequestMappingHandlerMapping은 스프링 빈에 @RequestMapping 또는 @Controller가 **클래스 레벨**에 붙어 있는 경우에 매핑 정보로 인식한다.
+그러므로 아래의 코드도 @Controller를 사용하는 것과 동일하게 동작한다.
+```java
+@Component 
+@RequestMapping
+public class SpringMemberFormControllerV1 {
+      @RequestMapping("/springmvc/v1/members/new-form")
+      public ModelAndView process() {
+          return new ModelAndView("new-form");
+      }
+}
+```
+`@Controller`는 내부에 @Conponent 애노테이션이 포함되어 있어서 컴포넌트 스캔도 자동으로 되고, RequestMappingHandlerMapping이 <br>
+`@Controller` 애노테이션이 있으면 자동으로 인식하기 때문에 `@Controller` 하나로 처리하는 것이 편하다!
+<br>
+<br>
+
+#### SpringMemberSaveControllerV1
+> 회원 저장
+```java
+package hello.servlet.web.springmvc.v1;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@Controller
+public class SpringMemberSaveControllerV1 {
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @RequestMapping("/springmvc/v1/members/save")
+    public ModelAndView process(HttpServletRequest request, HttpServletResponse response) {
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+
+        Member member = new Member(username, age);
+        memberRepository.save(member);
+
+        ModelAndView mv = new ModelAndView("save-result");
+        mv.addObject("member", member); //스프링이 제공하는 ModelAndView를 이용해 Model 데이터를 추가할 때는 addObject() 를 사용하면 된다.
+        return mv;
+    }
+}
+```
+<br>
+<br>
+
+#### SpringMemberListControllerV1
+> 회원 목록
+```java
+package hello.servlet.web.springmvc.v1;
+
+import hello.servlet.domain.member.Member;
+import hello.servlet.domain.member.MemberRepository;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.util.List;
+
+@Controller
+public class SpringMemberListControllerV1 {
+    private MemberRepository memberRepository = MemberRepository.getInstance();
+
+    @RequestMapping("/springmvc/v1/members")
+    public ModelAndView process() {
+        List<Member> members = memberRepository.findAll();
+
+        ModelAndView mv = new ModelAndView("members");
+        mv.addObject("members", members);
+
+        return mv;
+    } 
+}
+```
+<br>
+<br>
 <br>
 <br>
 
