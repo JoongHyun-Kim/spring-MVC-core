@@ -1217,3 +1217,80 @@ public interface HttpMessageConverter<T> {
 <br>
 
 ## 요청 매핑 핸들러 어댑터 구조
+> HTTP 메시지 컨버터가 스프링 MVC 구조의 어디쯤에서 사용되는 것인지 알아보자!
+
+@RequestMapping을 처리하는 핸들러 어댑터인 RequestMappingHandlerAdapter를 살펴보자.
+<br>
+
+### RequestMappingHandlerAdapter 동작 방식
+<img width="558" alt="스크린샷 2022-08-30 오후 5 29 09" src="https://user-images.githubusercontent.com/80838501/187388978-497fcd41-89d4-4b29-a7d1-12a58af7cc44.png">
+
+#### ArgumentResolver
+```java
+public interface HandlerMethodArgumentResolver {
+      
+    boolean supportsParameter(MethodParameter parameter);
+      
+    @Nullable
+    Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+              NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception;
+}
+```
+애노테이션 기반의 컨트롤러는 매우 다양한 파라미터를 사용할 수 있다. 지금까지 살펴본 바로는 HttpServletRequest, Model뿐만 아니라 
+@RequestParam, @ModelAttribute 같은 애노테이션, 그리고 @RequestBody, HttpEntity 같은 HTTP 메시지를 처리하는 
+파라미터까지 사용할 수 있었다.
+이와 같이 파라미터를 유연하게 처리할 수 있는 이유가 바로 `ArgumentResolver` 덕분이다.
+애노테이션 기반 컨트롤러를 처리하는 **RequestMappingHandlerAdapter**는 `ArgumentResolver`를 호출해서 
+컨트롤러(핸들러)가 필요로 하는 다양한 파라미터의 값(객체)을 생성한 뒤 컨트롤러를 호출하면서 값을 넘겨준다.
+<br>
+<br>
+
+#### 동작 방식
+ArgumentResolver의 supportsParameter()를 호출해 해당 파라미터를 지원하는지 체크하고, 만약 지원하면 resolveArgument()를 
+호출해서 실제 객체를 생성한다. 그리고 이렇게 생성된 객체가 컨트롤러 호출 시 넘어간다.
+<br>
+<br>
+<br>
+
+#### HTTP 메시지 컨버터 위치
+<img width="592" alt="스크린샷 2022-08-30 오후 5 43 51" src="https://user-images.githubusercontent.com/80838501/187391984-f4990b5f-3a54-4074-8bd4-b499ab8c5c11.png">
+
+**요청**
+```
+@RequestBody를 처리하는 ArgumentResolver가 있고 HttpEntity를 처리하는 ArgumentResolver가 있다. 
+이 ArgumentResolver들이 HTTP 메시지 컨버터를 사용해서 필요한 객체를 생성한다.
+```
+<br>
+<br>
+
+**응답**
+```
+@ResponseBody와 HttpEntity를 처리하는 ReturnValueHandler가 있다. 여기에서 HTTP 메시지 컨버터를 호출해서 응답 결과를 만든다.
+```
+<br>
+<br>
+<br>
+
+#### 확장
+- 스프링은 다음을 모두 인터페이스로 제공하기 때문에, 필요에 따라 언제든지 기능을 확장할 수 있다.
+    - `HandlerMethodArgumentResolver`, `HandlerMethodReturnValueHandler`, `HttpMessageConverter`
+- 실제 자주 사용되지는 않지만, 기능 확장이 필요하면 WebMvcConfigurer를 상속 받아서 스프링 빈으로 등록하면 된다. 
+<br>
+
+#### WebMvcConfigurer 확장
+```java
+@Bean
+public WebMvcConfigurer webMvcConfigurer() {
+    return new WebMvcConfigurer() {
+        @Override
+        public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+            //...
+        }
+
+        @Override
+        public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+            //...
+        } 
+    };
+}
+```
