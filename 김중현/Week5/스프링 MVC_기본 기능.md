@@ -1025,6 +1025,109 @@ public class ResponseViewController {
 <br>
 
 ## HTTP 응답 - HTTP API, 메시지 바디에 직접 입력
+> HTTP API를 제공하는 경우에는 HTML이 아니라 데이터를 전달해야 하므로 HTTP 메시지 바디에 JSON같은 형식으로 데이터를 담아 보낸다. <br>
+> 정적 리소스나 뷰 템플릿 없이 직접 HTTP 응답 메시지를 전달하는 경우에 대해 정리해보자!
+
+#### ResponseBodyController
+```java
+package hello.springmvc.basic.response;
+    
+import hello.springmvc.basic.HelloData;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Slf4j
+@Controller
+public class ResponseBodyController {
+    
+    @GetMapping("/response-body-string-v1")
+    public void responseBodyV1(HttpServletResponse response) throws IOException {
+        response.getWriter().write("ok");
+    }
+
+    /**
+    * HttpEntity, ResponseEntity(Http Status 추가)
+    * @return
+    */
+    @GetMapping("/response-body-string-v2")
+    public ResponseEntity<String> responseBodyV2() {
+        return new ResponseEntity<>("ok", HttpStatus.OK);
+    }
+    
+    @ResponseBody
+    @GetMapping("/response-body-string-v3")
+    public String responseBodyV3() {
+        return "ok";
+    }
+    
+    @GetMapping("/response-body-json-v1")
+    public ResponseEntity<HelloData> responseBodyJsonV1() {
+        HelloData helloData = new HelloData();
+        helloData.setUsername("userA");
+        helloData.setAge(20);
+        
+        return new ResponseEntity<>(helloData, HttpStatus.OK);
+    }
+    
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    @GetMapping("/response-body-json-v2")
+    public HelloData responseBodyJsonV2() {
+        HelloData helloData = new HelloData();
+        helloData.setUsername("userA");
+        helloData.setAge(20);
+          
+        return helloData;
+    } 
+}
+```
+#### responseBodyV1
+```java
+response.getWriter().write("ok")
+```
+- 서블릿을 다룰 때처럼 HttpServletResponse 객체를 통해 HTTP 메시지 바디에 직접 ok 응답 메시지를 전달한다.
+<br>
+<br>
+
+#### responseBodyV2
+- ResponseEntity는 HttpEntity를 상속 받는데 HttpEntity는 HTTP 메시지의 헤더, 바디 정보를 가지고 있다.
+    - ResponseEntity는 여기에 더해 HTTP 응답 코드를 설정할 수 있다.
+<br>
+<br>
+
+#### responseBodyV3
+- ResponseBody를 사용하면 view를 사용하지 않고 HTTP 메시지 컨버터를 통해 HTTP 메시지를 직접 입력할 수 있다.<br>
+  ResponseEntity도 동일한 방식으로 동작한다.
+<br>
+<br>
+
+#### responseBodyJsonV1
+- ResponseEntity를 반환한다. HTTP 메시지 컨버터를 통해 JSON 형식으로 변환되어 반환된다.
+<br>
+<br>
+
+#### responseBodyJsonV2
+- ResponseEntity는 HTTP 응답 코드를 설정할 수 있는데 반해 @ResponseBody를 사용하면 이런 것을 설정하기 까다롭다.
+- @ResponseStatus(HttpStatus.OK) 애노테이션을 사용하면 응답 코드도 설정할 수 있다.
+    - 애노테이션이기 때문에 응답 코드를 동적으로 변경할 수 없다.
+    - 동적으로 변경하고 싶으면 ResponseEntity를 사용하면 된다.
+<br>
+<br>
+
+#### @RestController
+- 이름 그대로 Rest API(HTTP API)를 만들 때 사용하는 컨트롤러이다.
+- @Controller 대신 @RestController 애노테이션을 사용하면 해당 컨트롤러에 모두 @ResponseBody가 적용되는 효과가 있다. <br>
+  따라서 뷰 템플릿을 사용하는 것이 아니라 HTTP 메시지 바디에 직접 데이터를 입력한다. 
+<br>
+<br>
+<br>
+<br>
+
 ## HTTP 메시지 컨버터
 ## 요청 매핑 핸들러 어댑터 구조
-
