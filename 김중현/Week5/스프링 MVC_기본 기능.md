@@ -660,3 +660,51 @@ public String modelAttributeV2(HelloData helloData) {
 String, int, Integer 같은 단순 타입 = @RequestParam
 나머지 = @ModelAttribute (argument resolver로 지정해둔 타입 외)
 ```
+<br>
+<br>
+<br>
+<br>
+
+## HTTP 요청 메시지 - 단순 텍스트
+- 요청 파라미터와 다르게 HTTP 메시지 바디를 통해 데이터가 직접 넘어오는 경우에는 `@RequestParam`, `@ModelAttribute`를 사용할 수 없다. 
+<br>
+
+- 가장 단순한 텍스트 메시지를 HTTP 메시지 바디에 담아서 전송하고, 읽어보는 예제를 살펴보자.
+    - HTTP 메시지 바디의 데이터를 InputStream 을 사용해서 직접 읽을 수 있다.
+#### RequestBodyStringController
+```java
+@Slf4j
+@Controller
+public class RequestBodyStringController {
+    @PostMapping("/request-body-string-v1")
+    public void requestBodyString(HttpServletRequest request, HttpServletResponse response) throws IOException {
+          ServletInputStream inputStream = request.getInputStream();
+          String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+          log.info("messageBody={}", messageBody);
+          response.getWriter().write("ok");
+    }
+}
+``` 
+<br>
+<br>
+
+#### requestBodyStringV2(Input, Output 스트림, Reader)
+```java
+/**
+* InputStream(Reader): HTTP 요청 메시지 바디의 내용을 직접 조회 
+* OutputStream(Writer): HTTP 응답 메시지의 바디에 직접 결과 출력 
+*/
+@PostMapping("/request-body-string-v2")
+public void requestBodyStringV2(InputStream inputStream, Writer responseWriter) throws IOException {
+     String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+     log.info("messageBody={}", messageBody);
+     responseWriter.write("ok");
+}
+```
+
+## HTTP 요청 메시지 - JSON
+## HTTP 응답 - 정적 리소스, 뷰 템플릿
+## HTTP 응답 - HTTP API, 메시지 바디에 직접 입력
+## HTTP 메시지 컨버터
+## 요청 매핑 핸들러 어댑터 구조
+
