@@ -701,7 +701,86 @@ public void requestBodyStringV2(InputStream inputStream, Writer responseWriter) 
      responseWriter.write("ok");
 }
 ```
+- 스프링 MVC는 아래 파라미터를 지원한다.
+    - InputStream(Reader): HTTP 요청 메시지 바디 내용을 직접 조회 
+    - OutputStream(Writer): HTTP 응답 메시지의 바디에 직접 결과 출력
+<br>
+<br>
 
+#### requestBodyStringV3(HttpEntity)
+```java
+/**
+* HttpEntity: HTTP header, body 정보를 편리하게 조회
+* - 메시지 바디 정보를 직접 조회(@RequestParam X, @ModelAttribute X)
+* - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용 
+*
+* 응답에서도 HttpEntity 사용 가능
+* - 메시지 바디 정보 직접 반환(view 조회X)
+* - HttpMessageConverter 사용 
+* -> StringHttpMessageConverter 적용
+*/
+@PostMapping("/request-body-string-v3")
+public HttpEntity<String> requestBodyStringV3(HttpEntity<String> httpEntity) {
+    String messageBody = httpEntity.getBody();
+    log.info("messageBody={}", messageBody);
+      
+    return new HttpEntity<>("ok");
+}
+```
+- 스프링 MVC는 아래 파라미터를 지원한다.
+    - HttpEntity: HTTP header, body 정보를 편리하게 조회
+        - 메시지 바디 정보를 직접 조회
+        - 요청 파라미터를 조회하는 기능과 관계 없다. `@RequestParam` X, `@ModelAttribute` X 
+    - HttpEntity는 응답에도 사용 가능하다.
+        - 메시지 바디 정보 직접 반환 
+        - 헤더 정보 포함 가능
+        - view 조회X
+<br>
+
+#### 참고
+> HttpEntity 를 상속받은 다음 객체들도 같은 기능을 제공한다. 
+- RequestEntity
+    - HttpMethod, url 정보가 추가됨
+    - 요청에서 사용 
+- ResponseEntity
+    - HTTP 상태 코드 설정 가능
+    - 응답에서 사용
+<br>
+<br>
+
+#### requestBodyStringV4(@RequestBody)
+```java
+/**
+* @RequestBody
+* - 메시지 바디 정보를 직접 조회(@RequestParam X, @ModelAttribute X)
+* - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용 
+* 
+* @ResponseBody
+* - 메시지 바디 정보 직접 반환(view 조회X)
+* - HttpMessageConverter 사용 -> StringHttpMessageConverter 적용 
+*/
+@ResponseBody
+@PostMapping("/request-body-string-v4")
+public String requestBodyStringV4(@RequestBody String messageBody) {
+    log.info("messageBody={}", messageBody);
+    return "ok";
+}
+```
+### @RequestBody
+- @RequestBody를 사용하면 HTTP 메시지 바디 정보를 편리하게 조회할 수 있다. 
+- 헤더 정보가 필요하면 HttpEntity나 @RequestHeader를 사용하면 된다.
+- 이런 메시지 바디를 직접 조회하는 기능은 요청 파라미터를 조회하는 @RequestParam, @ModelAttribute와는 전혀 관계가 없다.
+<br>
+<br>
+
+### 요청 파라미터 vs HTTP 메시지 바디
+- 요청 파라미터를 조회하는 기능: @RequestParam, @ModelAttribute 
+- HTTP 메시지 바디를 직접 조회하는 기능: @RequestBody
+<br>
+<br>
+<br>
+<br>
+    
 ## HTTP 요청 메시지 - JSON
 ## HTTP 응답 - 정적 리소스, 뷰 템플릿
 ## HTTP 응답 - HTTP API, 메시지 바디에 직접 입력
