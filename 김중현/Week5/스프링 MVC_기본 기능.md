@@ -1130,4 +1130,90 @@ response.getWriter().write("ok")
 <br>
 
 ## HTTP 메시지 컨버터
+> 뷰 템플릿으로 HTML을 생성해서 응답하는 것이 아니라, HTTP API처럼 JSON 데이터를 HTTP 메시지 바디에서 직접 읽거나 쓰는 경우 HTTP 메시지 컨버터를 사용하면 편리하다.
+
+스프링 MVC는 다음의 경우에 HTTP 메시지 컨버터를 적용한다.
+```
+HTTP 요청: @RequestBody, HttpEntity(RequestEntity)
+HTTP 응답: @ResponseBody, HttpEntity(ResponseEntity)
+```
+<br>
+<br>
+
+#### HTTP 메시지 컨버터 인터페이스
+```java
+package org.springframework.http.converter;
+  
+public interface HttpMessageConverter<T> {
+  boolean canRead(Class<?> clazz, @Nullable MediaType mediaType);
+  boolean canWrite(Class<?> clazz, @Nullable MediaType mediaType);
+  List<MediaType> getSupportedMediaTypes();
+   
+  T read(Class<? extends T> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException;
+    
+  void write(T t, @Nullable MediaType contentType, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException;
+}
+```
+<br>
+<br>
+<br>
+
+### 스프링 부트 기본 메시지 컨버터
+```
+0 = ByteArrayHttpMessageConverter
+1 = StringHttpMessageConverter
+2 = MappingJackson2HttpMessageConverter
+```
+- 스프링 부트는 다양한 메시지 컨버터를 제공하는데, 대상 클래스 타입과 미디어 타입을 체크해서 사용여부를 결정한다. <br>
+  만족하지 않는 경우에는 다음 메시지 컨버터로 우선순위가 넘어간다.
+<br>
+<br>
+
+#### 주요 메시지 컨버터
+```
+1. ByteArrayHttpMessageConverter: byte[] 데이터를 처리한다.
+    - 클래스 타입: byte[], 미디어타입: */* ,
+    - 요청 예시) @RequestBody byte[] data
+    - 응답 예시) @ResponseBody return byte[] 
+        - 미디어타입 application/octet-stream
+2. StringHttpMessageConverter: String 문자로 데이터를 처리한다. 
+    - 클래스 타입: String, 미디어타입: */*
+    - 요청 예시) @RequestBody String data
+    - 응답 예시) @ResponseBody return "ok" 
+        - 미디어타입 text/plain
+3. MappingJackson2HttpMessageConverter: application/json
+    - 클래스 타입: 객체 또는 HashMap, 미디어타입 application/json 관련
+    - 요청 예시) @RequestBody HelloData data
+    - 응답 예시) @ResponseBody return helloData
+        - 미디어타입 application/json 관련
+```
+<br>
+<br>
+<br>
+
+### 정리
+#### HTTP 요청 데이터 읽기
+- HTTP 요청이 오고 컨트롤러에서 @RequestBody, HttpEntity 파라미터를 사용한다. 
+- 메시지 컨버터가 메시지를 읽을 수 있는지 확인하기 위해 canRead()를 호출한다.
+    - 1. 대상 클래스 타입을 지원하는가
+        - Ex) @RequestBody의 대상 클래스(byte[], String, HelloData)
+    - 2. HTTP 요청의 Content-Type 미디어 타입을 지원하는가
+        - Ex) text/plain, application/json, */*
+- canRead() 조건을 만족하면, read()를 호출해서 객체를 생성하고 반환한다.
+<br>
+<br>
+
+#### HTTP 응답 데이터 생성
+- 컨트롤러에서 @ResponseBody, HttpEntity로 값이 반환된다.
+- 메시지 컨버터가 메시지를 쓸 수 있는지 확인하기 위해 canWrite() 를 호출한다.
+    - 1. 대상 클래스 타입을 지원하는가
+        - Ex) return의 대상 클래스 (byte[],  String, HelloData)
+    - 2. HTTP 요청의 Accept 미디어 타입을 지원하는가(더 정확히는 @RequestMapping의 produces) 
+        - Ex) text/plain, application/json, */*
+- canWrite() 조건을 만족하면 write()를 호출해 HTTP 응답 메시지 바디에 데이터를 생성한다.
+<br>
+<br>
+<br>
+<br>
+
 ## 요청 매핑 핸들러 어댑터 구조
