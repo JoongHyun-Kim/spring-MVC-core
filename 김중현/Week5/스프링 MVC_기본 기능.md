@@ -564,4 +564,99 @@ public String requestParamDefault(
  }
 ```
 - 파라미터를 `Map`, `MultiValueMap`으로 조회할 수 있다.
-- 
+<br>
+<br>
+<br>
+<br>
+
+## HTTP 요청 파라미터 - @ModelAttribute
+- 실제 개발을 할 때, 요청 파라미터를 받아서 필요한 객체를 만들고 그 객체에 값을 넣어주어야 한다.
+```java
+@RequestParam String username;
+@RequestParam int age;
+  
+HelloData data = new HelloData();
+data.setUsername(username);
+data.setAge(age);
+```
+- 스프링은 위 과정을 자동화해주는 `@ModelAttribute` 기능을 제공한다.
+<br>
+<br>
+
+#### HelloData
+> 요청 파라미터를 바인딩받을 객체
+```java
+package hello.springmvc.basic;
+ 
+import lombok.Data;
+
+@Data
+public class HelloData {
+    private String username;
+    private int age;
+}
+```
+<br>
+<br>
+<br>
+
+#### modelAttributeV1
+> @ModelAttribute 적용
+```java
+/**
+* @ModelAttribute 사용
+* 참고)
+* model.addAttribute(helloData) 코드도 함께 자동 적용됨
+*/
+@ResponseBody
+@RequestMapping("/model-attribute-v1")
+public String modelAttributeV1(@ModelAttribute HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+}
+```
+- 자동으로 HelloData 객체가 생성되고, 요청 파라미터의 값도 모두 들어가 있다.
+<br>
+
+- 스프링MVC는 `@ModelAttribute`가 있으면 다음을 실행한다. 
+```
+HelloData 객체를 생성한다.
+요청 파라미터의 이름으로 HelloData 객체의 프로퍼티를 찾고 해당 프로퍼티의 setter를 호출해 파라미터의 값을 입력(바인딩)한다.
+Ex) 파라미터 이름이 username이면 setUsername() 메소드를 찾아 호출하면서 값을 입력한다.
+```
+<br>
+<br>
+
+#### 프로퍼티
+```java
+class HelloData {
+    getUsername();
+    setUsername();
+}
+```
+- 객체에 getUsername(), setUsername() 메소드가 있으면 해당 객체는 username이라는 프로퍼티를 가지고 있다.
+- username 프로퍼티의 값을 변경하면 setUsername()이 호출되고, 조회하면 getUsername()이 호출된다.
+<br>
+<br>
+
+#### modelAttributeV2
+> @ModelAttribute 생략
+```java
+/**
+* @ModelAttribute 생략 가능
+* String, int 같은 단순 타입 = @RequestParam
+* argument resolver 로 지정해둔 타입 외 = @ModelAttribute 
+*/
+@ResponseBody
+@RequestMapping("/model-attribute-v2")
+public String modelAttributeV2(HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+}
+```
+- @ModelAttribute는 생략할 수 있다. 하지만 @RequestParam도 생략할 수 있어 혼란이 발생할 수 있다.
+- 이 때, 스프링은 다음과 같은 규칙을 적용한다.
+```
+String, int, Integer 같은 단순 타입 = @RequestParam
+나머지 = @ModelAttribute (argument resolver로 지정해둔 타입 외)
+```
