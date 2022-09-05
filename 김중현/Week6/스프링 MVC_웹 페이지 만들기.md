@@ -183,3 +183,130 @@ public class ItemRepositoryTest {
 }
 ```
 - 저장, 전체 조회, 수정 테스트 
+<br>
+<br>
+<br>
+<br>
+
+## 상품 목록 - 타임리프
+#### BasicItemController
+```java
+package hello.itemservice.web.basic;
+
+import hello.itemservice.domain.item.Item;
+import hello.itemservice.domain.item.ItemRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.annotation.PostConstruct;
+import java.util.List;
+
+@Controller
+@RequestMapping("/basic/items")
+@RequiredArgsConstructor
+public class BasicItemController {
+
+    private final ItemRepository itemRepository;
+
+    @GetMapping
+    public String items(Model model) { // "/basic/items" 경로로 GET이 오면 이 메소드가 호출
+        List<Item> items = itemRepository.findAll();
+        model.addAttribute("items", items); //model에 "items"라고 컬렉션이 담긴다.
+        return "basic/item"; //view 보여주기
+    }
+
+    /**
+     * 테스트용 데이터 추가
+     */
+    @PostConstruct
+    public void init() {
+        itemRepository.save(new Item("itemA", 10000, 10));
+        itemRepository.save(new Item("itemB", 20000, 20));
+    }
+}
+```
+- itemRepository에서 모든 상품을 조회한 뒤 모델에 담고, 뷰 템플릿을 호출한다.
+- @PostConstruct: 헤당 빈의 의존관계가 모두 주입되고 나면 초기화를 위해 호출된다.
+- `@RequiredArgsConstructor` 애노테이션: final이 붙은 필드의 생성자를 자동 생성해주는 롬복 애노테이션
+```java
+@Controller
+@RequestMapping("/basic/items")
+public class BasicItemController {
+
+    private final ItemRepository itemRepository;
+
+    @Autowired
+    public BasicItemController(ItemRepository itemRepository) {
+        this.itemRepository = itemRepository;
+    }
+}
+```
+
+```java
+@Controller
+@RequestMapping("/basic/items")
+@RequiredArgsConstructor
+public class BasicItemController {
+
+    private final ItemRepository itemRepository;
+}
+```
+→ 롬복이 itemRepository의 생성자를 자동으로 생성해준다. <br>
+→ 생성자가 1개만 있으면 스프링이 그 생성자에 `@Autowired`로 의존관계를 주입해준다.
+<br>
+<br>
+<br>
+
+> 정적 HTML으로 작성한 items.html을 뷰 템플릿 영역으로 복사해오고 타임리프를 적용해 코드를 수정하자!
+#### templates/basic/items.html
+```java
+<html xmlns:th="http://wwww.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container" style="max-width: 600px">
+    <div class="py-5 text-center">
+        <h2>상품 목록</h2></div>
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary float-end"
+                    onclick="location.href='addForm.html'"
+                    th:onclick="|location.href='@{/basic/items/add}'|"
+                    type="button">상품 등록
+            </button>
+        </div>
+    </div>
+    <hr class="my-4">
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>상품명</th>
+                <th>가격</th>
+                <th>수량</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${items}">
+                <td><a href="item.html" th:href="@{/basic/items/{itemId}(itemId=${item.id})}" th:text="${item.id}">회원id</a></td>
+                <td><a href="item.html" th:href="@{/basic/items/{itemId}(itemId=${item.id})}" th:text="${item.id}">상품명</a></td>
+                <td th:text="${item.price}">10000</td>
+                <td th:text="${item.quantity}">10</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div> <!-- /container -->
+</body>
+</html>
+```
+<br>
+
+### 타임리프
