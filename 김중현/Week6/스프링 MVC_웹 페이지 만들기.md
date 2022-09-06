@@ -310,3 +310,87 @@ public class BasicItemController {
 <br>
 
 ### 타임리프
+#### 사용선언
+```html
+<html xmlns:th="http://www.thymeleaf.org">
+```
+<br>
+<br>
+
+#### 타임리프의 핵심
+- th:xx가 붙은 부분은 서버사이드에서 렌더링되고, 기존의 것을 대체한다는 것이 핵심이다. 만약 th:xx가 붙어있지 않으면 기존 html의 xx 속성이 그대로<br>
+  사용된다.
+- HTML을 파일로 직접 열었을 때는 th:xx가 붙어있어도 웹 브라우저는 th 속성을 모르기 때문에 무시한다.
+- 그렇기 때문에 HTML을 파일 보기를 유지하면서 템플릿 기능도 할 수 있다.
+<br>
+<br>
+
+#### 속성 변경
+> th:href
+```html
+th:href="@{/css/bootstrap.min.css}"
+```
+- href="value1"을 th:href="value2" 값으로 변경한다.
+- 대부분의 HTML 속성을 th:xx로 변경할 수 있다.
+- 타임리프 뷰 템플릿을 거치면 원래의 값을 th:xx로 변경한다. 만약 값이 없으면 새로 생성한다.
+- HTML을 그대로 열어볼 때는 href 속성이 사용되지만 뷰 템플릿을 거치면 th:href의 값이 href를 대체하면서 동적으로 변경될 수 있다.
+<br>
+<br>
+
+> th:onclick
+```html
+th:onclick="|location.href='@{/basic/items/add}'|"
+```
+<br>
+<br>
+
+#### 리터럴 대체 
+> |...|
+```html
+<span th:text="|Welcome to out application, ${user.name}!|">
+```
+- 타임리프에서 문자와 표현식은 분리되어 있기 때문에 더해서 사용해야 하는데 리터럴 대체 문법을 사용하면 편리하게 더할 수 있다.
+<br>
+<br>
+
+#### URL 링크 표현식
+> @{...}
+```html
+th:href="@{/css/bootstrap.min.css}"
+```
+- URL 링크를 사용하는 경우 `@{...}`를 사용하며 이를 URL 링크 표현식이라고 한다.
+- URL 링크 표현식을 사용하면 서블릿 컨텍스트를 자동으로 포함한다.(참고)
+<br>
+<br>
+
+#### 반복 출력
+> th:each
+```html
+<tr th:each="item : ${items}">
+```
+- 모델에 포함된 items 컬렉션의 데이터가 item 변수에 하나씩 포함되고, 반복문 안에서 item 변수를 사용할 수 있다.
+- 컬렉션의 데이터 수만큼 <tr></tr>이 하위 태그를 포함해 생성된다.
+<br>
+<br>
+
+#### 변수 표현식
+> ${...}
+```html
+<td th:text="${item.price}">10000</td>
+```
+- 모델에 포함된 값이나 타임리프 변수로 선언한 값을 조회할 수 있다.
+- 프로퍼티 접근법을 사용한다.
+    - Ex) item.getPrice()
+<br>
+<br>
+
+> th:text
+- 값을 th:text의 값으로 변경한다.
+- Ex) 10000을 ${item.price}의 값으로 변경한다.
+<br>
+<br>
+
+#### 참고
+> 타임리프는 순수 HTML 파일을 웹 브라우저에서 열어 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. <br>
+> 그런데 JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤섞여 정상적인 확인이 불가능하고 오직 서버를 통해서 JSP를 열어야 한다. <br>
+> 이렇게 순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)이라 한다.
