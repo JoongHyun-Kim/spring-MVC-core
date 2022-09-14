@@ -394,3 +394,83 @@ th:href="@{/css/bootstrap.min.css}"
 > 타임리프는 순수 HTML 파일을 웹 브라우저에서 열어 내용을 확인할 수 있고, 서버를 통해 뷰 템플릿을 거치면 동적으로 변경된 결과를 확인할 수 있다. <br>
 > 그런데 JSP 파일은 웹 브라우저에서 그냥 열면 JSP 소스코드와 HTML이 뒤섞여 정상적인 확인이 불가능하고 오직 서버를 통해서 JSP를 열어야 한다. <br>
 > 이렇게 순수 HTML을 그대로 유지하면서 뷰 템플릿도 사용할 수 있는 타임리프의 특징을 네츄럴 템플릿 (natural templates)이라 한다.
+<br>
+<br>
+<br>
+<br>
+
+## 상품 상세
+### 상품 상세 컨트롤러
+#### BasicItemController
+```java
+@GetMapping("/{itemId}")
+public String item(@PathVariable Long itemId, Model model) {
+    Item item = itemRepository.findById(itemId);
+    model.addAttribute("item", item);
+    
+    return "basic/item";
+}
+```
+- GetMapping으로 item()을 실행하도로 해주고, @PathVariable로 넘어온 상품ID를 이용해 상품을 조회하고 모델에 담은 후 뷰 템플릿을 호출한다.
+<br>
+<br>
+
+### 상품 상세 뷰
+#### templates/basic/item.html
+```java
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+    <style>
+                 .container {
+            max-width: 560px;
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="py-5 text-center">
+        <h2>상품 상세</h2></div>
+    <div>
+        <label for="itemId">상품 ID</label>
+        <input type="text" id="itemId" name="itemId" class="form-control"
+               value="1" th:value="${item.id}" readonly> //value 속성을 th:value 속성으로 변경
+    </div>
+    <div>
+        <label for="itemName">상품명</label>
+        <input type="text" id="itemName" name="itemName" class="form-control"
+               value="상품A" th:value="${item.itemName}" readonly></div>
+    <div>
+        <label for="price">가격</label>
+        <input type="text" id="price" name="price" class="form-control"
+               value="10000" th:value="${item.price}" readonly>
+    </div>
+    <div>
+        <label for="quantity">수량</label>
+        <input type="text" id="quantity" name="quantity" class="form-control"
+               value="10" th:value="${item.quantity}" readonly>
+    </div>
+    <hr class="my-4">
+    <div class="row">
+        <div class="col">
+            <button class="w-100 btn btn-primary btn-lg"
+                    onclick="location.href='editForm.html'"
+                    th:onclick="|location.href='@{/basic/items/{itemId}/edit(itemId=${item.id})}'|"
+                    type="button">상품 수정
+            </button>
+        </div>
+        <div class="col">
+            <button class="w-100 btn btn-secondary btn-lg"
+                    onclick="location.href='items.html'"
+                    th:onclick="|location.href='@{/basic/items}'|"
+                    type="button">목록으로
+            </button>
+        </div>
+    </div>
+</div> <!-- /container -->
+</body>
+</html>
+```
