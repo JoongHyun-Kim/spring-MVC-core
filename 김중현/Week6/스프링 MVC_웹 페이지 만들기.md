@@ -262,7 +262,7 @@ public class BasicItemController {
 
 > 정적 HTML으로 작성한 items.html을 뷰 템플릿 영역으로 복사해오고 타임리프를 적용해 코드를 수정하자!
 #### templates/basic/items.html
-```java
+```html
 <html xmlns:th="http://wwww.thymeleaf.org">
 <head>
     <meta charset="utf-8">
@@ -418,7 +418,7 @@ public String item(@PathVariable Long itemId, Model model) {
 
 ### 상품 상세 뷰
 #### templates/basic/item.html
-```java
+```html
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -438,7 +438,7 @@ public String item(@PathVariable Long itemId, Model model) {
     <div>
         <label for="itemId">상품 ID</label>
         <input type="text" id="itemId" name="itemId" class="form-control"
-               value="1" th:value="${item.id}" readonly> //value 속성을 th:value 속성으로 변경
+               value="1" th:value="${item.id}" readonly> <!-- value 속성을 th:value 속성으로 변경 -->
     </div>
     <div>
         <label for="itemName">상품명</label>
@@ -495,7 +495,7 @@ public String addForm() {
 
 ### 상품 등록 뷰
 #### templates/basic/addForm.html
-```java
+```html
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -514,7 +514,7 @@ public String addForm() {
         <h2>상품 등록 폼</h2></div>
     <h4 class="mb-3">상품 입력</h4>
 
-    <form action="item.html" th:action method="post"> //나중에 치환이 되면 action이 비게 되고, 그러면 그냥 현재 url(items/add)에다가 값을 넘기게 된다.(Post)
+    <form action="item.html" th:action method="post"> <!-- 나중에 치환이 되면 action이 비게 되고, 그러면 그냥 현재 url(items/add)에다가 값을 넘기게 된다.(Post) -->
         <div>
             <label for="itemName">상품명</label>
             <input type="text" id="itemName" name="itemName" class="form-control" placeholder="이름을 입력하세요"></div>
