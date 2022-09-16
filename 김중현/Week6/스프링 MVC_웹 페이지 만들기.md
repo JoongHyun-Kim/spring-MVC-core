@@ -547,3 +547,72 @@ public String addForm() {
 - 상품 등록 폼의 URL과 실제 상품 등록을 처리하는 URL을 똑같이 설정하고 **HTTP 메소드로 두 기능을 구분한다.**
     - 상품 등록 폼 → **GET** /basic/items/add
     - 상품 등록 처리 → **POST** /basic/items/add
+<br>
+<br>
+<br>
+<br>
+
+## 상품 등록 처리
+> @ModelAttribute
+- 상품 등록 폼에서 전달된 데이터로 실제 상품 등록 처리를 구현해보자!
+- 상품 등록 폼은 **HTML Form 방식**으로 서버에 데이터를 전달한다.
+```
+content-type: application/x-www-form-urlencoded
+메시지 바디에 쿼리 파라미터 형식으로 전달한다.(Ex. itemName=itemA&price=10000&quantity=10)
+```
+<br>
+<br>
+
+### @RequestParam
+> 요청 파라미터 형식을 처리하기 위해 @RequestParam을 사용하자
+
+#### addItemV1
+> BasicItemController에 추가해 상품 등록 처리를 구현해보자!
+```java
+@PostMapping("/add") //같은 url로 오더라도 Get, Post로 add와 save 구분
+public String addItemV1(@RequestParam String itemName,
+                        @RequestParam int price,
+                        @RequestParam Integer quantity,
+                        Model model) {
+
+    //파라미터가 들어오면 실제 Item 객체를 생성해 itemRepository를 통해 저장한 후 저장된 item을 모델에 담아 뷰테 전달한다.
+    Item item = new Item();
+    item.setItemName(itemName);
+    item.setPrice(price);
+    item.setQuantity(quantity);
+
+    itemRepository.save(item);
+    model.addAttribute("item", item);
+
+    return "basic/item"; //item.html 뷰 템플릿 재활용
+}
+```
+<br>
+<br>
+<br>
+
+#### addItemV2
+- @RequestParam으로 변수를 하나하나 받아 Item을 생성하는 과정은 너무 불편하므로, **@ModelAttribute**를 사용해 한 번에 처리하자!
+```java
+/**
+ * ModelAttribute 버전
+ * @ModelAttribute("item") Item item
+ */
+@PostMapping("/add")
+public String addItemV2(@ModelAttribute("item") Item item) {
+
+    // ModelAttribute가 이 부분을 자동으로 처리
+    /*
+    Item item = new Item();
+    item.setItemName(itemName);
+    item.setPrice(price);
+    item.setQuantity(quantity);
+    */
+
+    //ModelAttribute는 1. model 객체를 만들어주고, 2. 내가 지정한 이름대로 (item) model에 담아준다.
+    itemRepository.save(item);
+    //model.addAttribute("item", item); //자동 추가. 생략 가능
+
+    return "basic/item";
+}
+```
