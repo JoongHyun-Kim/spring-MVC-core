@@ -609,10 +609,66 @@ public String addItemV2(@ModelAttribute("item") Item item) {
     item.setQuantity(quantity);
     */
 
-    //ModelAttribute는 1. model 객체를 만들어주고, 2. 내가 지정한 이름대로 (item) model에 담아준다.
+    //ModelAttribute는 1. item 객체를 만들어주고, 2. 내가 지정한 이름대로 (item) model에 담아준다.
     itemRepository.save(item);
     //model.addAttribute("item", item); //자동 추가. 생략 가능
 
     return "basic/item";
 }
 ```
+#### @ModelAttribute의 기능
+```
+1. 요청 파라미터 처리
+- Item 객체를 생성하고 요청 파라미터의 값을 프로퍼티 접근법으로(set___) 입력해준다. 
+
+2. Model 추가
+- Model에 @ModelAttribute로 지정한 객체를 자동으로 넣어준다. <br>
+→ model.addAttribute("item", item) 부분을 자동으로 처리해준다.
+```
+<br>
+<br>
+
+- 모델에 데이터를 담을 때, 이름은 `@ModelAttribute`에 지정한 name(value) 속성을 사용한다. 
+- 만약 다음과 같이 @ModelAttribute의 이름을 다르게 지정하면 다른 이름으로 모델에 들어간다.
+```
+@ModelAttribute("hello") Item item → 이름을 hello 로 지정 
+model.addAttribute("hello", item); → 모델에 hello 이름으로 저장
+```
+<br>
+<br>
+<br>
+
+#### addItemV3
+> ModelAttribute 이름 생략 버전
+```java
+/**
+ * @ModelAttribute name 생략 가능
+ * model.addAttribute(item); 자동 추가. 생략 가능
+ * 생략시 model에 저장되는 name은 클래스명 첫글자만 소문자로 바꾼 이름으로 등록 Item -> item 
+ */
+@PostMapping("/add")
+public String addItemV3(@ModelAttribute Item item) {
+    itemRepository.save(item);
+    return "basic/item";
+}
+```
+- 위와 같이 `@ModelAttribute`의 이름을 생략할 수도 있다.
+    - 생략하면 모델에 저장될 때 클래스의 첫글자만 소문자로 변경한 이름으로 등록된다.
+<br>
+<br>
+<br>
+
+#### addItemV4
+> ModelAttribute 전체 생략
+```java
+/**
+ * @ModelAttribute 자체 생략 가능
+ * model.addAttribute(item) 자동 추가 
+ */
+@PostMapping("/add")
+public String addItemV4(Item item) {
+    itemRepository.save(item);
+    return "basic/item";
+}
+```
+- @ModelAttribute를 생략하는 것도 가능하다. 대상 객체는 모델에 자동으로 등록된다.
