@@ -672,3 +672,27 @@ public String addItemV4(Item item) {
 }
 ```
 - @ModelAttribute를 생략하는 것도 가능하다. 대상 객체는 모델에 자동으로 등록된다.
+<br>
+<br>
+<br>
+<br>
+
+## 상품 수정
+> 상품 수정 폼 컨트롤러
+#### BasicItemController 추가
+```java
+@GetMapping("/{itemId}/edit")
+public String editForm(@PathVariable Long itemId, Model model) {
+    Item item = itemRepository.findById(itemId);
+    model.addAttribute("item", item);
+    
+    return "basic/editForm";
+}
+```
+- 수정에 필요한 정보를 조회하고, 수정용 폼 뷰를 호출한다.
+<br>
+<br>
+
+### 상품 수정 폼 뷰
+- 정적 HTML을 뷰 템플릿 영역으로 복사 후 수정해보자!
+#### editForm.html
