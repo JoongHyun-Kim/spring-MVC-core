@@ -689,10 +689,91 @@ public String editForm(@PathVariable Long itemId, Model model) {
     return "basic/editForm";
 }
 ```
-- 수정에 필요한 정보를 조회하고, 수정용 폼 뷰를 호출한다.
+- 수정에 필요한 정보를 조회하고 수정용 폼 뷰(editForm)를 호출한다.
 <br>
 <br>
 
 ### 상품 수정 폼 뷰
 - 정적 HTML을 뷰 템플릿 영역으로 복사 후 수정해보자!
 #### editForm.html
+```html
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+            href="../css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 560px;
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="py-5 text-center">
+        <h2>상품 수정 폼</h2></div>
+    <form action="item.html" th:action method="post">
+        <div>
+            <label for="id">상품 ID</label>
+            <input type="text" id="id" name="id" class="form-control" value="1" th:value="${item.id}" readonly>
+        </div>
+        <div>
+            <label for="itemName">상품명</label>
+            <input type="text" id="itemName" name="itemName" class="form-control" value="상품A" th:value="${item.itemName}">
+        </div>
+        <div>
+            <label for="price">가격</label>
+            <input type="text" id="price" name="price" class="form-control" value="10000" th:value="${item.price}">
+        </div>
+        <div>
+            <label for="quantity">수량</label>
+            <input type="text" id="quantity" name="quantity" class="form-control" value="10" th:value="${item.quantity}">
+        </div>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col">
+                <button class="w-100 btn btn-primary btn-lg" type="submit">저장
+                </button>
+            </div>
+            <div class="col">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='item.html'"
+                        th:onclick="|location.href='@{/basic/items/{itemId}(itemId=${item.id})}'|"
+                        type="button">취소
+                </button>
+            </div>
+        </div>
+    </form>
+</div> <!-- /container -->
+</body>
+</html>
+```
+<br>
+<br>
+<br>
+
+### 상품 수정
+> 수정 버튼 클릭 시 상품이 수정되도록 구현해보자!
+```java
+@PostMapping("/{itemId}/edit")
+public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
+    itemRepository.update(itemId, item);
+
+    return "redirect:/basic/items/{itemId}";
+}
+```
+```
+GET /items/{itemId}/edit → 상품 수정 폼
+POST /items/{itemId}/edit → 상품 수정 처리
+```
+- 같은 경로로 오더라도 HTTP 메소드에 따라(GET, POST) 구분한다.
+<br>
+<br>
+<br>
+
+### 리다이렉트
+- 상품 수정 단계는 마지막에 뷰 템플릿을 호출하지 않고 상품 상세 화면으로 이동하도록 **리다이렉트**를 호출하자.
+- `redirect:/...`으로 리다이렉트를 호출할 수 있다.
+- 컨트롤러에 매핑된 @PathVariable 값은 redirect에도 사용할 수 있다.
+    - redirect:/basic/items/{itemId}에서 {itemId}는 @PathVariable Long itemId 값을 그대로 사용한다.(치환)
