@@ -813,3 +813,42 @@ public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
     return "redirect:/basic/items/{itemId}";
 }
 ```
+<br>
+<br>
+<br>
+<br>
+
+## RedirectAttributes
+> 상품 저장 후 상품 상세 화면으로 리다이렉트는 되지만, 고객 입장에서 상품 저장이 잘 된 것인지 확신이 들지 않는다. <br>
+> 저장이 잘 되었으면 상품 상세 화면에 "저장완료!" 메시지를 보여주도록 수정해보자!
+<br>
+<br>
+
+#### BasicItemController
+```java
+@PostMapping("/add")
+public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+    Item savedItem = itemRepository.save(item);
+    redirectAttributes.addAttribute("itemId", savedItem.getId());
+    redirectAttributes.addAttribute("status", true); //true면 저장이 잘 된 것. 쿼리 파라미터로 넘어간다.
+
+    return "redirect:/basic/items/{itemId}"; //savedItem.getId()값 치환
+}
+```
+- RedirectAttributes를 이용해 리다이렉트될 때 `status=true`값이 추가되도록 수정하자. 그리고 뷰 템플릿에서 status 값이 true면 "저장완료!" 메시지를 출력하자.
+- 실행 시 리다이렉트 결과는 다음과 같다. `http://localhost:8080/basic/items/3?status=true` 
+<br>
+<br>
+
+#### templates/basic/item.html
+```html
+<div class="container">
+    <div class="py-5 text-center"> 
+        <h2>상품 상세</h2>
+    </div>
+    
+    <!-- 추가 -->
+    <h2 th:if="${param.status}" th:text="'저장 완료!'"></h2>
+</div>
+```
+- status값이 true면 텍스트를 보이게 한다.
