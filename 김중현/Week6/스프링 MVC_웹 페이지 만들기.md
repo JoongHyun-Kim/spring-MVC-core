@@ -777,3 +777,39 @@ POST /items/{itemId}/edit → 상품 수정 처리
 - `redirect:/...`으로 리다이렉트를 호출할 수 있다.
 - 컨트롤러에 매핑된 @PathVariable 값은 redirect에도 사용할 수 있다.
     - redirect:/basic/items/{itemId}에서 {itemId}는 @PathVariable Long itemId 값을 그대로 사용한다.(치환)
+<br>
+<br>
+<br>
+
+## PRG 
+> Post/Redirect/Get
+- 현재 `상품 등록 처리 컨트롤러`(addItemV1~addItemV4)는 심각한 문제가 있다. 상품 등록을 완료하고 웹 브라우저의 새로고침을 할 때마다 중복 등록된다.
+
+<img width="800" alt="스크린샷 2022-09-20 오후 12 51 44" src="https://user-images.githubusercontent.com/80838501/191163655-59a7897e-f69a-4c93-86bd-fb9fa5848d12.png">
+
+- 웹 브라우저 새로 고침은 마지막에 서버에 전송한 데이터를 다시 전송하는 것이다.
+- 상품 등록 폼에서 저장 클릭 시 `POST /add + 상품 데이터`를 서버로 전송하는데, 현 상태에서 새로 고침을 하면 마지막에 전송한 `POST /add + 상품 데이터`를 서버로 재전송하게 되는 것이다.
+  그래서 데이터는 동일하고 ID만 다른 상품 데이터가 계속 생성된다.
+<br>
+<br>
+<br>
+
+이 문제를 **PRG**로 해결해보자!
+
+<img width="846" alt="스크린샷 2022-09-20 오후 12 58 09" src="https://user-images.githubusercontent.com/80838501/191164538-1886cc64-cb62-494c-a1ff-16b5dbefa89c.png">
+
+- 상품 저장 후에 뷰 템플릿으로 이동하지 말고 상품 상세 화면으로 리다이렉트해주어 새로 고침 문제를 해결하자.
+- 웹 브라우저는 상품 저장 후 상품 상세 화면으로 리다이렉트되기 때문에, 가장 마지막에 호출된 내용이 상품 상세 화면인 `GET /items/{id}`가 된다. <br>
+  따라서, 새로고침을 해도 상품 상세 화면으로 이동하기 때문에 상품이 중복 저장되는 문제가 해결되는 것이다.
+<br>
+<br>
+
+#### BasicItemController
+```java
+@PostMapping("/{itemId}/edit")
+public String edit(@PathVariable Long itemId, @ModelAttribute Item item) {
+    itemRepository.update(itemId, item);
+
+    return "redirect:/basic/items/{itemId}";
+}
+```
